@@ -1,0 +1,32 @@
+{
+  "name": "kms-shivathmika",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack",
+    "dev:backend": "py -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000",
+    "worker:ingestion": "py backend/scripts/run_ingestion_worker.py",
+    "db:init": "py backend/scripts/init_db.py",
+    "db:upgrade:team-ownership": "py backend/scripts/upgrade_team_ownership.py",
+    "db:upgrade:file-metadata": "py backend/scripts/upgrade_file_metadata.py",
+    "db:upgrade:ingestion-queue": "py backend/scripts/upgrade_ingestion_queue.py",
+    "db:upgrade:pgvector-chunks": "py backend/scripts/upgrade_pgvector_chunks.py",
+    "db:seed": "py backend/scripts/seed_documents.py",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^16.0.8",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.2",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.8",
+    "typescript": "^5.9.3"
+  }
+}
