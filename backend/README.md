@@ -9,29 +9,35 @@ FastAPI service for Beforest KMS documents/pages backed by PostgreSQL.
 3. Install dependencies:
 
 ```powershell
-py -m pip install -r backend/requirements.txt
+npm.cmd run backend:install
 ```
 
 4. Create tables:
 
 ```powershell
-py backend/scripts/init_db.py
-py backend/scripts/upgrade_team_ownership.py
-py backend/scripts/upgrade_file_metadata.py
-py backend/scripts/upgrade_ingestion_queue.py
-py backend/scripts/upgrade_pgvector_chunks.py
+npm.cmd run db:init
+npm.cmd run db:upgrade:team-ownership
+npm.cmd run db:upgrade:file-metadata
+npm.cmd run db:upgrade:ingestion-queue
+npm.cmd run db:upgrade:pgvector-chunks
 ```
 
 5. Run the API:
 
 ```powershell
-py -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+npm.cmd run dev:backend
+```
+
+6. Confirm the API is listening:
+
+```powershell
+Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing
 ```
 
 Optional seed:
 
 ```powershell
-py backend/scripts/seed_documents.py
+npm.cmd run db:seed
 ```
 
 ## Ingestion Worker
@@ -39,13 +45,14 @@ py backend/scripts/seed_documents.py
 Uploaded files are stored in `UPLOAD_DIR` and queued for ingestion through Redis/RQ.
 
 ```powershell
-py backend/scripts/run_ingestion_worker.py
+npm.cmd run worker:ingestion
 ```
 
 Required environment:
 
 ```env
 REDIS_URL=redis://127.0.0.1:6379/0
+UPLOAD_DIR=backend/uploads
 INGESTION_QUEUE_NAME=kms-document-ingestion
 EMBEDDING_MODEL_NAME=BAAI/bge-base-en-v1.5
 EMBEDDING_DIMENSIONS=768

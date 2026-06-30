@@ -1,7 +1,6 @@
 "use client";
 
 import type { CurrentUser, KmsDocument, QuickFilter, Team, ViewId } from "@/types/kms";
-import { BookIcon, CheckIcon, DocumentIcon, SearchIcon } from "@/components/icons";
 import { ActivityList, DocumentCard, RecentRow, TeamCard } from "@/components/cards";
 import { CollectiveView } from "@/components/CollectiveView";
 
@@ -18,6 +17,7 @@ type SharedViewProps = {
   onTeamOpen: (teamName: string) => void;
   onViewChange: (view: ViewId) => void;
   currentUser: CurrentUser;
+  searchValue: string;
 };
 
 export function Views(props: SharedViewProps) {
@@ -31,7 +31,7 @@ export function Views(props: SharedViewProps) {
         <RecentView {...props} />
       </ViewFrame>
       <ViewFrame id="teams" activeView={activeView}>
-        <TeamsView teams={props.teams} teamCounts={props.teamCounts} onTeamOpen={props.onTeamOpen} currentUser={props.currentUser} />
+        <TeamsView teams={props.teams} teamCounts={props.teamCounts} onTeamOpen={props.onTeamOpen} currentUser={props.currentUser} searchValue={props.searchValue} />
       </ViewFrame>
       <ViewFrame id="documents" activeView={activeView}>
         <DocumentsView documents={props.filteredDocuments} onOpenDoc={props.onOpenDoc} />
@@ -40,10 +40,7 @@ export function Views(props: SharedViewProps) {
         <SharedKnowledgeView onViewChange={props.onViewChange} />
       </ViewFrame>
       <ViewFrame id="collective" activeView={activeView}>
-        <CollectiveView onViewChange={props.onViewChange} />
-      </ViewFrame>
-      <ViewFrame id="glossary" activeView={activeView}>
-        <GlossaryView />
+        <CollectiveView onViewChange={props.onViewChange} searchValue={props.searchValue} />
       </ViewFrame>
       <ViewFrame id="templates" activeView={activeView}>
         <TemplatesView />
@@ -214,17 +211,25 @@ function TeamsView({
   teams,
   teamCounts,
   onTeamOpen,
-  currentUser
+  currentUser,
+  searchValue
 }: {
   teams: Team[];
   teamCounts: Map<string, number>;
   onTeamOpen: (teamName: string) => void;
   currentUser: CurrentUser;
+  searchValue: string;
 }) {
+  const query = searchValue.trim().toLowerCase();
+  const visibleTeams = query
+    ? teams.filter((team) => `${team.name} ${team.description}`.toLowerCase().includes(query))
+    : teams;
+
   return (
     <section className="panel">
       <h2>All Pilot Team Spaces</h2>
-      <TeamGrid teams={teams} teamCounts={teamCounts} onTeamOpen={onTeamOpen} currentUser={currentUser} />
+      <TeamGrid teams={visibleTeams} teamCounts={teamCounts} onTeamOpen={onTeamOpen} currentUser={currentUser} />
+      <Empty visible={visibleTeams.length === 0}>No matching team spaces found.</Empty>
     </section>
   );
 }
@@ -287,7 +292,7 @@ function SharedKnowledgeView({ onViewChange }: { onViewChange: (view: ViewId) =>
         </article>
         <article className="doc">
           <div>
-            <h3>Templates</h3>
+            <h3>Page Creation Guide</h3>
             <div className="subtle">Page details and creation guidelines for teams.</div>
           </div>
           <div className="doc-actions">
@@ -301,64 +306,12 @@ function SharedKnowledgeView({ onViewChange }: { onViewChange: (view: ViewId) =>
   );
 }
 
-function GlossaryView() {
-  return (
-    <div className="glossary-page">
-      <section className="glossary-coming">
-        <div className="coming-badge">Coming soon</div>
-        <h2>AI-powered glossary</h2>
-        <div className="coming-copy">
-          <div>Glossary terms will be automatically built by an agent that reads new KMS pages, identifies Beforest-specific terms, and generates accurate definitions from live source pages.</div>
-          <div>No manual entry needed - the agent keeps the glossary updated as knowledge grows.</div>
-        </div>
-        <div className="glossary-steps" aria-label="Glossary automation steps">
-          <span className="step-chip">
-            <span className="step-icon" aria-hidden="true">
-              <DocumentIcon />
-            </span>
-            New page saved
-          </span>
-          <span className="step-arrow">&gt;</span>
-          <span className="step-chip">
-            <span className="step-icon" aria-hidden="true">
-              <SearchIcon />
-            </span>
-            Agent extracts terms
-          </span>
-          <span className="step-arrow">&gt;</span>
-          <span className="step-chip">
-            <span className="step-icon" aria-hidden="true">
-              <CheckIcon />
-            </span>
-            Definition published
-          </span>
-        </div>
-      </section>
-
-      <section className="glossary-terms-card">
-        <div className="glossary-card-head">
-          <div className="glossary-label">Glossary terms</div>
-          <div className="terms-count">0 terms</div>
-        </div>
-        <input className="glossary-search" type="search" placeholder="Search terms..." disabled />
-        <div className="glossary-empty">
-          <div className="book-icon" aria-hidden="true">
-            <BookIcon />
-          </div>
-          <div className="glossary-empty-title">No glossary terms yet</div>
-          <div className="glossary-empty-subtext">Terms will appear here automatically once the agent is active and pages are added to the KMS.</div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function TemplatesView() {
   return (
     <>
       <section className="panel">
-        <h2>Templates</h2>
-        <div className="subtle">Templates keep pages consistent across teams and prepare content for future search and chat citations.</div>
+        <h2>Page Creation Guide</h2>
+        <div className="subtle">Use this guide to keep pages consistent across teams and prepare content for future search and chat citations.</div>
       </section>
       <div className="templates">
         <article className="template-card">

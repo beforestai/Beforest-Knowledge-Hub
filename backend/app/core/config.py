@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://postgres:postgres@127.0.0.1:5432/beforest_kms"
     api_cors_origins: str = "http://127.0.0.1:3000,http://localhost:3000"
-    upload_dir: str = "/app/uploads"
+    upload_dir: str = "backend/uploads"
     redis_url: str = "redis://127.0.0.1:6379/0"
     ingestion_queue_name: str = "kms-document-ingestion"
     embedding_model_name: str = "BAAI/bge-base-en-v1.5"

@@ -11,8 +11,7 @@ const primaryNav: Array<{ id: ViewId; label: string }> = [
 
 const sharedNav: Array<{ id: ViewId; label: string }> = [
   { id: "collective", label: "Collective-wise Information" },
-  { id: "glossary", label: "Glossary" },
-  { id: "templates", label: "Templates" }
+  { id: "templates", label: "Page Creation Guide" }
 ];
 
 type ShellProps = {

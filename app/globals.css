@@ -499,9 +499,24 @@
       cursor: pointer;
     }
 
+    .file-upload span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .file-upload:hover {
       border-color: #1d9e75;
       background: #f4faf7;
+    }
+
+    .file-upload.has-file {
+      justify-content: flex-start;
+      border-style: solid;
+      border-color: #5dcaa5;
+      background: #eef8f3;
+      color: #24583d;
     }
 
     .file-upload input {
@@ -1107,180 +1122,6 @@
     .web-dot.coral { background: #d85a30; }
     .web-dot.blue { background: #378add; }
 
-    .external-icon {
-      margin-left: auto;
-      color: var(--muted);
-      font-size: 11px;
-      flex: none;
-    }
-
-    .glossary-page {
-      display: grid;
-      gap: 18px;
-    }
-
-    .glossary-coming,
-    .glossary-terms-card {
-      border: 0.5px solid var(--line);
-      border-radius: 10px;
-      box-shadow: none;
-    }
-
-    .glossary-coming {
-      display: grid;
-      gap: 14px;
-      background: #faeeda;
-      border-color: #ef9f27;
-      color: #633806;
-      padding: 18px;
-    }
-
-    .coming-badge {
-      width: fit-content;
-      border-radius: 999px;
-      background: #fac775;
-      color: #633806;
-      padding: 5px 10px;
-      font-size: 12px;
-      font-weight: 750;
-    }
-
-    .glossary-coming h2 {
-      margin: 0;
-      color: #412402;
-      font-size: 24px;
-      font-weight: 500;
-      letter-spacing: 0;
-    }
-
-    .coming-copy {
-      display: grid;
-      gap: 8px;
-      max-width: 980px;
-      color: #633806;
-      line-height: 1.55;
-    }
-
-    .glossary-steps {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      margin-top: 2px;
-    }
-
-    .step-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      border: 1px solid #ef9f27;
-      border-radius: 999px;
-      background: #fac775;
-      color: #633806;
-      padding: 7px 11px;
-      font-size: 13px;
-      font-weight: 750;
-    }
-
-    .step-icon {
-      display: inline-grid;
-      width: 18px;
-      height: 18px;
-      place-items: center;
-      border-radius: 50%;
-      background: rgba(99, 56, 6, 0.12);
-      font-size: 11px;
-      line-height: 1;
-    }
-
-    .step-icon svg {
-      width: 12px;
-      height: 12px;
-      stroke: currentColor;
-    }
-
-    .step-arrow {
-      color: #854f0b;
-      font-weight: 800;
-    }
-
-    .glossary-terms-card {
-      background: var(--panel);
-      padding: 18px;
-    }
-
-    .glossary-card-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .glossary-label {
-      font-weight: 800;
-      color: var(--ink);
-    }
-
-    .terms-count {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 650;
-    }
-
-    .glossary-search {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #f4f7f5;
-      color: var(--muted);
-      padding: 11px 12px;
-      font: inherit;
-      margin-bottom: 18px;
-    }
-
-    .glossary-search:disabled {
-      cursor: not-allowed;
-      opacity: 1;
-    }
-
-    .glossary-empty {
-      display: grid;
-      justify-items: center;
-      gap: 8px;
-      min-height: 220px;
-      align-content: center;
-      text-align: center;
-      color: var(--muted);
-    }
-
-    .book-icon {
-      display: grid;
-      width: 52px;
-      height: 52px;
-      place-items: center;
-      border-radius: 50%;
-      background: #eef3f0;
-      color: #1d9e75;
-    }
-
-    .book-icon svg {
-      width: 24px;
-      height: 24px;
-      stroke: currentColor;
-    }
-
-    .glossary-empty-title {
-      color: var(--ink);
-      font-size: 18px;
-      font-weight: 800;
-    }
-
-    .glossary-empty-subtext {
-      max-width: 520px;
-      line-height: 1.5;
-    }
-
     .template {
       margin-top: 18px;
       background: #26342d;
@@ -1392,6 +1233,28 @@
     .rich-preview h2 {
       font-size: 18px;
       margin: 0 0 8px;
+    }
+
+    .attachment-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      width: fit-content;
+      max-width: 100%;
+      color: #0f6e56;
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .attachment-link:hover {
+      text-decoration: underline;
+    }
+
+    .attachment-link span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .success-dialog {

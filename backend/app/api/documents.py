@@ -1,6 +1,9 @@
 from uuid import UUID
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -8,6 +11,7 @@ from backend.app.db.session import get_db
 from backend.app.core.current_user import CurrentUser, get_current_user
 from backend.app.schemas.document import DocumentCreate, DocumentList, DocumentRead, DocumentUpdate
 from backend.app.services.documents import (
+    attachment_debug,
     create_document,
     delete_document,
     get_document,
@@ -96,9 +100,9 @@ def create_document_endpoint(
             job_id = enqueue_document_ingestion(document.id, document.file_storage_path)
             document = set_document_ingestion_job(db, document, job_id)
         except Exception as exc:
-            mark_document_ingestion_enqueue_failed(db, document, str(exc))
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Document saved, but ingestion job could not be queued.") from exc
+            document = mark_document_ingestion_enqueue_failed(db, document, str(exc))
 
+    print("[KMS attachment:backend create response]", attachment_debug(document), flush=True)
     return document
 
 
@@ -108,6 +112,26 @@ def get_document_endpoint(document_id: UUID, db: Session = Depends(get_db)) -> D
     if not document:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
     return document
+
+
+@router.get("/{document_id}/file")
+def get_document_file_endpoint(document_id: UUID, db: Session = Depends(get_db)) -> FileResponse:
+    document = get_document(db, document_id)
+    if not document:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
+    if not document.file_storage_path:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No supporting file attached.")
+
+    file_path = Path(document.file_storage_path)
+    if not file_path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Supporting file not found.")
+
+    return FileResponse(
+        path=file_path,
+        media_type=document.file_content_type or None,
+        filename=document.file_name,
+        content_disposition_type="inline",
+    )
 
 
 @router.patch("/{document_id}", response_model=DocumentRead)
@@ -174,5 +198,4 @@ def upload_document_file_endpoint(
         job_id = enqueue_document_ingestion(document.id, document.file_storage_path)
         return set_document_ingestion_job(db, document, job_id)
     except Exception as exc:
-        mark_document_ingestion_enqueue_failed(db, document, str(exc))
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="File uploaded, but ingestion job could not be queued.") from exc
+        return mark_document_ingestion_enqueue_failed(db, document, str(exc))

@@ -18,6 +18,7 @@ export function CreatePageDialog({ open, onClose, onSave, isSaving = false, curr
   const contentRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [contentError, setContentError] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useDialogOpen(dialogRef, open, onClose);
 
@@ -30,7 +31,7 @@ export function CreatePageDialog({ open, onClose, onSave, isSaving = false, curr
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
-    const file = data.get("file") instanceof File && (data.get("file") as File).name ? (data.get("file") as File) : null;
+    const file = selectedFile;
     const title = String(data.get("title") || "").trim();
     const richContent = contentRef.current?.innerHTML.trim() || "";
     setContentError(false);
@@ -64,6 +65,7 @@ export function CreatePageDialog({ open, onClose, onSave, isSaving = false, curr
       return;
     }
     form.reset();
+    setSelectedFile(null);
     if (contentRef.current) contentRef.current.innerHTML = "";
   }
 
@@ -181,11 +183,13 @@ export function CreatePageDialog({ open, onClose, onSave, isSaving = false, curr
             </div>
             <div className="form-row">
               <label htmlFor="fileInput">Supporting file, optional</label>
-              <label className="file-upload" htmlFor="fileInput">
-                <UploadIcon />
-                <span>Choose file to attach</span>
-                <input id="fileInput" name="file" type="file" />
-              </label>
+              <AttachmentPicker
+                inputId="fileInput"
+                inputName="file"
+                selectedFile={selectedFile}
+                emptyLabel="Choose file to attach"
+                onFileChange={setSelectedFile}
+              />
             </div>
           </div>
         </div>
@@ -228,6 +232,16 @@ export function DetailDialog({
   useEffect(() => {
     setIsEditing(false);
     setSelectedFile(null);
+    if (doc) {
+      console.debug("[KMS attachment:page details received]", {
+        id: doc.id,
+        title: doc.title,
+        file_name: doc.fileName,
+        file_storage_path: doc.fileStoragePath,
+        file_content_type: doc.fileContentType,
+        file_size_bytes: doc.fileSizeBytes
+      });
+    }
   }, [doc?.id]);
 
   const canEdit = Boolean(doc && doc.teamId === currentUser.teamId);
@@ -327,11 +341,13 @@ export function DetailDialog({
                 </div>
                 <div className="form-row">
                   <label htmlFor="editFileInput">Supporting file</label>
-                  <label className="file-upload" htmlFor="editFileInput">
-                    <UploadIcon />
-                    <span>{selectedFile ? selectedFile.name : "Choose replacement file"}</span>
-                    <input id="editFileInput" name="file" type="file" onChange={(event) => setSelectedFile(event.target.files?.[0] || null)} />
-                  </label>
+                  <AttachmentPicker
+                    inputId="editFileInput"
+                    inputName="file"
+                    selectedFile={selectedFile}
+                    emptyLabel="Choose replacement file"
+                    onFileChange={setSelectedFile}
+                  />
                 </div>
               </div>
             ) : (
@@ -343,9 +359,7 @@ export function DetailDialog({
                 <b>KMS citation</b>
                 <span>{pagePathForDoc(doc)}</span>
                 <b>Supporting file</b>
-                <span>
-                  {doc.fileName || "No file attached"} ({doc.fileType})
-                </span>
+                <SupportingFileLink doc={doc} />
                 <b>Storage path</b>
                 <span>{doc.fileStoragePath || "Not uploaded"}</span>
                 <b>File metadata</b>
@@ -412,6 +426,58 @@ export function SuccessDialog({ open, onClose }: { open: boolean; onClose: () =>
         </button>
       </div>
     </dialog>
+  );
+}
+
+function AttachmentPicker({
+  inputId,
+  inputName,
+  selectedFile,
+  emptyLabel,
+  onFileChange
+}: {
+  inputId: string;
+  inputName: string;
+  selectedFile: File | null;
+  emptyLabel: string;
+  onFileChange: (file: File | null) => void;
+}) {
+  return (
+    <label className={`file-upload${selectedFile ? " has-file" : ""}`} htmlFor={inputId}>
+      <UploadIcon />
+      <span>{selectedFile ? selectedFile.name : emptyLabel}</span>
+      <input
+        id={inputId}
+        name={inputName}
+        type="file"
+        onChange={(event) => onFileChange(event.target.files?.[0] || null)}
+      />
+    </label>
+  );
+}
+
+function SupportingFileLink({ doc }: { doc: KmsDocument }) {
+  const hasFile = Boolean(doc.fileStoragePath && doc.fileName && doc.fileName !== "No supporting file attached");
+  if (process.env.NODE_ENV !== "production") {
+    console.debug("[KMS attachment:details]", {
+      id: doc.id,
+      hasFile,
+      fileName: doc.fileName,
+      fileStoragePath: doc.fileStoragePath,
+      fileContentType: doc.fileContentType,
+      fileSizeBytes: doc.fileSizeBytes
+    });
+  }
+
+  if (!hasFile) {
+    return <span>No supporting file attached</span>;
+  }
+
+  return (
+    <a className="attachment-link" href={`/api/documents/${doc.id}/file`} target="_blank" rel="noopener noreferrer">
+      <UploadIcon />
+      <span>{doc.fileName}</span>
+    </a>
   );
 }
 

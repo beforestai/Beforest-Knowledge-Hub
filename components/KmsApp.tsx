@@ -10,8 +10,9 @@ import { Shell } from "@/components/Shell";
 import { Views } from "@/components/Views";
 import { ChatWidget } from "@/components/ChatWidget";
 import { CreatePageDialog, DetailDialog, SuccessDialog } from "@/components/Dialogs";
+import { collectiveSearchMatch } from "@/components/CollectiveView";
 
-const viewIds: ViewId[] = ["home", "teams", "documents", "recent", "shared", "collective", "glossary", "templates"];
+const viewIds: ViewId[] = ["home", "teams", "documents", "recent", "shared", "collective", "templates"];
 
 function viewFromHash(hash: string): ViewId {
   const candidate = hash.replace(/^#/, "");
@@ -136,28 +137,84 @@ export function KmsApp() {
     }
   }
 
+  function handleSearchSubmit(query: string) {
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return;
+
+    setSearchValue(cleanQuery);
+    setTeamFilter("all");
+    setQuickFilter({ type: "all", value: "all" });
+
+    const normalizedQuery = cleanQuery.toLowerCase();
+    if (collectiveSearchMatch(cleanQuery) || normalizedQuery.includes("collective")) {
+      navigateToView("collective");
+      return;
+    }
+
+    if (teams.some((team) => `${team.name} ${team.description}`.toLowerCase().includes(normalizedQuery))) {
+      navigateToView("teams");
+      return;
+    }
+
+    if (normalizedQuery.includes("template") || normalizedQuery.includes("page creation guide")) {
+      navigateToView("templates");
+      return;
+    }
+
+    navigateToView("documents");
+  }
+
   async function handleSaveDocument(doc: KmsDocumentCreate, mode: "draft" | "publish", file: File | null) {
     setIsSavingDocument(true);
     try {
       const savedDocument = await createDocument(doc, file);
-      setDocuments((current) => [savedDocument, ...current.filter((item) => item.id !== savedDocument.id)]);
+      console.debug("[KMS attachment:react state save]", {
+        id: savedDocument.id,
+        title: savedDocument.title,
+        file_name: savedDocument.fileName,
+        file_storage_path: savedDocument.fileStoragePath,
+        file_content_type: savedDocument.fileContentType,
+        file_size_bytes: savedDocument.fileSizeBytes
+      });
+      setDocuments((current) => {
+        const nextDocuments = [savedDocument, ...current.filter((item) => item.id !== savedDocument.id)];
+        const storedDocument = nextDocuments.find((item) => item.id === savedDocument.id);
+        console.debug("[KMS attachment:react state stored]", {
+          id: storedDocument?.id,
+          title: storedDocument?.title,
+          file_name: storedDocument?.fileName,
+          file_storage_path: storedDocument?.fileStoragePath,
+          file_content_type: storedDocument?.fileContentType,
+          file_size_bytes: storedDocument?.fileSizeBytes
+        });
+        return nextDocuments;
+      });
       setCreateOpen(false);
       navigateToView("documents");
 
       if (file && mode !== "draft") {
-        setSuccessOpen(true);
+        if (savedDocument.ingestionStatus === "enqueue_failed") {
+          showToast("Page and file saved. Ingestion queue could not be started.");
+        } else {
+          setSuccessOpen(true);
+        }
         return;
       }
 
       showToast(mode === "draft" ? "Draft saved." : "Page published.");
     } catch (error) {
+      if (file) {
+        showToast(error instanceof Error ? error.message : "Could not upload the supporting file.");
+        throw error;
+      }
+
       const localDocument: KmsDocument = {
         ...doc,
         id: `local-${Date.now()}`,
         fileStoragePath: "",
-        fileSizeBytes: file?.size ?? null,
-        fileContentType: file?.type ?? "",
-        ingestionStatus: file ? "local_only" : "not_required",
+        fileSizeBytes: null,
+        fileContentType: "",
+        ingestionStatus: "not_required",
         ingestionJobId: "",
         ingestionError: "",
         ingestionChunkCount: 0,
@@ -185,7 +242,13 @@ export function KmsApp() {
       }
       setDocuments((current) => current.map((item) => (item.id === savedDocument.id ? savedDocument : item)));
       setSelectedDoc(savedDocument);
-      showToast(file ? "Page updated and file uploaded." : "Page updated.");
+      showToast(
+        file && savedDocument.ingestionStatus === "enqueue_failed"
+          ? "Page and file updated. Ingestion queue could not be started."
+          : file
+            ? "Page updated and file uploaded."
+            : "Page updated."
+      );
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Could not update this page.");
       throw error;
@@ -207,10 +270,7 @@ export function KmsApp() {
         searchValue={searchValue}
         onViewChange={navigateToView}
         onSearchChange={setSearchValue}
-        onSearchSubmit={(question) => {
-          setSearchValue(question);
-          window.dispatchEvent(new CustomEvent("kms-search-submit", { detail: question }));
-        }}
+        onSearchSubmit={handleSearchSubmit}
         onCreatePage={() => setCreateOpen(true)}
         currentUser={currentUser}
       >
@@ -250,6 +310,7 @@ export function KmsApp() {
           onTeamOpen={handleTeamOpen}
           onViewChange={navigateToView}
           currentUser={currentUser}
+          searchValue={searchValue}
         />
       </Shell>
       <ChatBridge documents={documents} onOpenDoc={setSelectedDoc} />

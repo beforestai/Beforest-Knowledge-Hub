@@ -86,15 +86,6 @@ export function ChatWidget({ documents, onOpenDoc }: ChatWidgetProps) {
     );
   }, [documents]);
 
-  useEffect(() => {
-    const handleTopbarSubmit = (event: Event) => {
-      const question = (event as CustomEvent<string>).detail;
-      submitChatQuestion(question);
-    };
-    window.addEventListener("kms-search-submit", handleTopbarSubmit);
-    return () => window.removeEventListener("kms-search-submit", handleTopbarSubmit);
-  }, [submitChatQuestion]);
-
   async function askKmsAssistant(value: string): Promise<{ answer: string; citations: ChatCitation[] }> {
     try {
       const response = await fetch("/api/chat/ask", {

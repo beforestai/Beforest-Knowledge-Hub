@@ -9,6 +9,17 @@ from backend.app.models.document import Document
 from backend.app.schemas.document import DocumentCreate, DocumentUpdate
 
 
+def attachment_debug(document: Document) -> dict[str, object]:
+    return {
+        "id": str(document.id),
+        "title": document.title,
+        "file_name": document.file_name,
+        "file_storage_path": document.file_storage_path,
+        "file_content_type": document.file_content_type,
+        "file_size_bytes": document.file_size_bytes,
+    }
+
+
 def slugify(value: str) -> str:
     chars: list[str] = []
     previous_dash = False
@@ -71,6 +82,18 @@ def create_document(db: Session, payload: DocumentCreate) -> Document:
     data["slug"] = data["slug"] or slugify(data["title"])
     data["updated"] = data["updated"] or date.today()
     document = Document(**data)
+    print(
+        "[KMS attachment:backend row before save]",
+        {
+            "id": None,
+            "title": document.title,
+            "file_name": document.file_name,
+            "file_storage_path": document.file_storage_path,
+            "file_content_type": document.file_content_type,
+            "file_size_bytes": document.file_size_bytes,
+        },
+        flush=True,
+    )
     db.add(document)
     try:
         db.commit()
@@ -78,6 +101,7 @@ def create_document(db: Session, payload: DocumentCreate) -> Document:
         db.rollback()
         raise
     db.refresh(document)
+    print("[KMS attachment:backend row after save]", attachment_debug(document), flush=True)
     return document
 
 

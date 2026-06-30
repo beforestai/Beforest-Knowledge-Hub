@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { collectiveReferenceGroups, overviewStorageKey } from "@/data/kmsData";
 import { useLocalStorageState } from "@/hooks/useLocalStorageState";
 import type { ViewId } from "@/types/kms";
@@ -15,13 +15,34 @@ const collectiveOptions = [
   { name: "Mumbai Collective", url: "https://beforest.co/the-mumbai-collective/" }
 ];
 
-export function CollectiveView({ onViewChange }: { onViewChange: (view: ViewId) => void }) {
+function normalizeSearch(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function collectiveSearchMatch(value: string) {
+  const query = normalizeSearch(value);
+  if (!query) return false;
+  return collectiveOptions.some((option) => `${option.name} ${option.url}`.toLowerCase().includes(query));
+}
+
+export function CollectiveView({ onViewChange, searchValue = "" }: { onViewChange: (view: ViewId) => void; searchValue?: string }) {
   const [selectedUrl, setSelectedUrl] = useState(collectiveOptions[0].url);
   const [overviewCache, setOverviewCache] = useLocalStorageState<Record<string, string>>(overviewStorageKey, {});
   const [isGenerating, setIsGenerating] = useState(false);
   const [manualMessage, setManualMessage] = useState("");
+  const matchingOptions = useMemo(() => {
+    const query = normalizeSearch(searchValue);
+    if (!query) return collectiveOptions;
+    return collectiveOptions.filter((option) => `${option.name} ${option.url}`.toLowerCase().includes(query));
+  }, [searchValue]);
   const selected = useMemo(() => collectiveOptions.find((option) => option.url === selectedUrl) || collectiveOptions[0], [selectedUrl]);
   const cachedOverview = overviewCache[selectedUrl];
+
+  useEffect(() => {
+    if (!matchingOptions.length) return;
+    setSelectedUrl(matchingOptions[0].url);
+    setManualMessage("");
+  }, [matchingOptions]);
 
   async function requestCollectiveOverview() {
     if (cachedOverview) return;
@@ -115,7 +136,7 @@ export function CollectiveView({ onViewChange }: { onViewChange: (view: ViewId) 
             }}
           >
             <optgroup label="Collective Webpages">
-              {collectiveOptions.map((option) => (
+              {(matchingOptions.length ? matchingOptions : collectiveOptions).map((option) => (
                 <option key={option.url} value={option.url}>
                   {option.name}
                 </option>
@@ -149,7 +170,6 @@ export function CollectiveView({ onViewChange }: { onViewChange: (view: ViewId) 
                 <button key={link.url} type="button" className="web-ref-link" onClick={() => window.open(link.url, "_blank", "noopener")}>
                   <span className={`web-dot ${group.color}`} />
                   <span>{link.name}</span>
-                  <span className="external-icon">open</span>
                 </button>
               ))}
             </section>
