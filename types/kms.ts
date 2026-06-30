@@ -5,7 +5,6 @@ export type ViewId =
   | "recent"
   | "shared"
   | "collective"
-  | "glossary"
   | "templates";
 
 export type QuickFilter = {

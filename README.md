@@ -14,8 +14,8 @@ The Next.js app runs at `http://127.0.0.1:3000`.
 ## Backend API
 
 ```powershell
-py -m pip install -r backend/requirements.txt
 Copy-Item backend/.env.example backend/.env
+npm.cmd run backend:install
 npm.cmd run db:init
 npm.cmd run db:upgrade:team-ownership
 npm.cmd run db:upgrade:file-metadata
@@ -25,12 +25,18 @@ npm.cmd run db:seed
 npm.cmd run dev:backend
 ```
 
+The backend runs at `http://127.0.0.1:8000`. Confirm it is up before testing uploads:
+
+```powershell
+Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing
+```
+
 Set `backend/.env` with the PostgreSQL connection:
 
 ```env
 DATABASE_URL=postgresql+psycopg://postgres:postgres@127.0.0.1:5432/beforest_kms
 API_CORS_ORIGINS=http://127.0.0.1:3000,http://localhost:3000
-UPLOAD_DIR=/app/uploads
+UPLOAD_DIR=backend/uploads
 REDIS_URL=redis://127.0.0.1:6379/0
 INGESTION_QUEUE_NAME=kms-document-ingestion
 EMBEDDING_MODEL_NAME=BAAI/bge-base-en-v1.5
@@ -113,7 +119,7 @@ documents (
 );
 ```
 
-File uploads from Create Page are sent to FastAPI as multipart form data. The backend writes uploaded files to `UPLOAD_DIR` (default `/app/uploads`) and stores `fileStoragePath`, `fileSizeBytes`, and `fileContentType` in PostgreSQL.
+File uploads from Create Page are sent to FastAPI as multipart form data. The backend writes uploaded files to `UPLOAD_DIR` (default `backend/uploads` for local development) and stores `fileStoragePath`, `fileSizeBytes`, and `fileContentType` in PostgreSQL.
 
 When a file is uploaded, FastAPI creates a Redis/RQ ingestion job. Start Redis first, then run:
 

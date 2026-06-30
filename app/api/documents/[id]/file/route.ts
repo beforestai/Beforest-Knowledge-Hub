@@ -8,3 +8,8 @@ export async function POST(request: Request, context: RouteContext) {
   const { id } = await context.params;
   return proxyToKmsApi({ path: `/documents/${id}/file`, request, method: "POST" });
 }
+
+export async function GET(request: Request, context: RouteContext) {
+  const { id } = await context.params;
+  return proxyToKmsApi({ path: `/documents/${id}/file`, request, method: "GET" });
+}
